@@ -1,0 +1,61 @@
+<atlassian-plugin key="${project.groupId}.${project.artifactId}" name="${project.name}" plugins-version="2">
+    <plugin-info>
+        <description>${project.description}</description>
+        <version>${project.version}</version>
+        <vendor name="${project.organization.name}" url="${project.organization.url}" />
+        <param name="plugin-logo">/ru/andreymarkelov/atlas/plugins/prombambooexporter/images/prom-exporter.png</param>
+        <param name="plugin-icon">/ru/andreymarkelov/atlas/plugins/prombambooexporter/images/prom-exporter-sm.png</param>
+        <param name="vendor-icon">/ru/andreymarkelov/atlas/plugins/prombambooexporter/images/32.jpg</param>
+        <param name="vendor-logo">/ru/andreymarkelov/atlas/plugins/prombambooexporter/images/144.jpg</param>
+        <param name="configure.url">/admin/prommetrics/settings.action</param>
+        <param name="atlassian-data-center-compatible">true</param>
+    </plugin-info>
+
+    <!-- I18N -->
+    <resource type="i18n" name="i18n" location="ru.andreymarkelov.atlas.plugins.prombambooexporter.i18n.prom-bamboo-exporter"/>
+
+    <!-- Web Resources -->
+    <web-resource key="prom-bamboo-exporter-resources" name="prom-bamboo-exporter Web Resources">
+        <dependency>com.atlassian.auiplugin:ajs</dependency>
+        <resource type="download" name="prom-bamboo-exporter.css" location="/ru/andreymarkelov/atlas/plugins/prombambooexporter/css/prom-bamboo-exporter.css"/>
+        <resource type="download" name="prom-bamboo-exporter.js" location="/ru/andreymarkelov/atlas/plugins/prombambooexporter/js/prom-bamboo-exporter.js"/>
+        <resource type="download" name="images/" location="/ru/andreymarkelov/atlas/plugins/prombambooexporter/images"/>
+        <context>prom-bamboo-exporter</context>
+    </web-resource>
+
+    <!-- Web Items -->
+    <web-item name="Security Token Admin Settings Link" key="prom-bamboo-exporter-configuration" section="system.admin/plugins" weight="100">
+        <label key="ru.andreymarkelov.atlas.plugins.prombambooexporter.admin.section"/>
+        <description key="ru.andreymarkelov.atlas.plugins.prombambooexporter.admin.section.desc"/>
+        <link linkId="prom-bamboo-exporter-configuration">/admin/prommetrics/settings.action</link>
+    </web-item>
+
+    <!-- Actions -->
+    <xwork name="Security Token Actions" key="prom-bamboo-exporter-actions">
+        <package name="prom-bamboo-exporter-action-admin" extends="admin" namespace="/admin/prommetrics">
+            <action name="settings" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.action.admin.SecureTokenConfigAction" method="doDefault">
+                <result name="input" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
+                <result name="error" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
+            </action>
+            <action name="savesettings" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.action.admin.SecureTokenConfigAction">
+                <result name="input" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
+                <result name="error" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
+                <result name="success" type="redirect">/admin/prommetrics/settings.action</result>
+            </action>
+        </package>
+    </xwork>
+
+    <!-- Components -->
+    <component name="Security Token Data Manager" key="prom-bamboo-exporter-data-manager" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.SecureTokenManagerImpl">
+        <interface>ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.SecureTokenManager</interface>
+    </component>
+
+    <!-- Component Imports -->
+    <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
+    <component-import key="loginUriProvider" interface="com.atlassian.sal.api.auth.LoginUriProvider"/>
+
+    <!-- Servlets -->
+    <servlet name="Exporter Servlet" key="prom-bamboo-exporter-servlet" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.servlet.PrometheusExporter">
+        <url-pattern>/prometheus/metrics</url-pattern>
+    </servlet>
+</atlassian-plugin>
