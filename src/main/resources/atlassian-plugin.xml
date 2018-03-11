@@ -49,6 +49,10 @@
     <component name="Security Token Data Manager" key="prom-bamboo-exporter-data-manager" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.SecureTokenManagerImpl">
         <interface>ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.SecureTokenManager</interface>
     </component>
+    <component name="Metrics Exporter" key="prom-bamboo-exporter-exporter" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.MetricCollectorImpl" public="true">
+        <interface>ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.MetricCollector</interface>
+        <description>This service collects metrics.</description>
+    </component>
 
     <!-- Component Imports -->
     <component-import key="pluginSettingsFactory" interface="com.atlassian.sal.api.pluginsettings.PluginSettingsFactory"/>
@@ -58,4 +62,7 @@
     <servlet name="Exporter Servlet" key="prom-bamboo-exporter-servlet" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.servlet.PrometheusExporter">
         <url-pattern>/prometheus/metrics</url-pattern>
     </servlet>
+
+    <!-- Listeners -->
+    <bambooEventListener name="Metrics Listener" key="prom-bamboo-exporter-metric-listener" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.listener.MetricListener"/>
 </atlassian-plugin>
