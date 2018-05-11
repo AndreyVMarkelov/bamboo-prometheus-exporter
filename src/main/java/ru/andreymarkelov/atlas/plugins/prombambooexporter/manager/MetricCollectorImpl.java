@@ -1,23 +1,29 @@
 package ru.andreymarkelov.atlas.plugins.prombambooexporter.manager;
 
+import java.util.ArrayList;
+import java.util.List;
+
+import com.atlassian.bamboo.license.BambooLicenseManager;
+import com.atlassian.extras.api.bamboo.BambooLicense;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
 import io.prometheus.client.Counter;
+import io.prometheus.client.Gauge;
 import io.prometheus.client.hotspot.DefaultExports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import static java.util.Collections.emptyList;
+import static java.util.concurrent.TimeUnit.DAYS;
+import static java.util.concurrent.TimeUnit.MILLISECONDS;
 
 public class MetricCollectorImpl extends Collector implements MetricCollector, InitializingBean, DisposableBean {
     private static final Logger log = LoggerFactory.getLogger(MetricCollectorImpl.class);
 
     private final CollectorRegistry registry;
+    private final BambooLicenseManager bambooLicenseManager;
 
     //--> Common
 
@@ -41,7 +47,32 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .labelNames("planKey")
             .create();
 
-    public MetricCollectorImpl() {
+    //--> Deploys
+
+    private final Counter finishedDeploysCounter = Counter.build()
+            .name("bamboo_finished_deploys_count")
+            .help("Finished Deploys Count")
+            .labelNames("planKey", "state")
+            .create();
+
+    //--> License
+    private final Gauge maintenanceExpiryDaysGauge = Gauge.build()
+            .name("bamboo_maintenance_expiry_days_gauge")
+            .help("Maintenance Expiry Days Gauge")
+            .create();
+
+    private final Gauge licenseExpiryDaysGauge = Gauge.build()
+            .name("bamboo_license_expiry_days_gauge")
+            .help("License Expiry Days Gauge")
+            .create();
+
+    private final Gauge allowedUsersGauge = Gauge.build()
+            .name("bamboo_allowed_users_gauge")
+            .help("Allowed Users Gauge")
+            .create();
+
+    public MetricCollectorImpl(BambooLicenseManager bambooLicenseManager) {
+        this.bambooLicenseManager = bambooLicenseManager;
         this.registry = CollectorRegistry.defaultRegistry;
     }
 
@@ -64,13 +95,39 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
         canceledBuildsCounter.labels(planKey).inc();
     }
 
+    //--> Deploys
+
+    @Override
+    public void finishedDeploysCounter(String planKey, String state) {
+        finishedDeploysCounter.labels(planKey, state).inc();
+    }
+
     //--> Collect
 
     private List<MetricFamilySamples> collectInternal() {
+        // license
+        BambooLicense bambooLicense = bambooLicenseManager.getLicense();
+        if (bambooLicense != null) {
+            // because nullable
+            if (bambooLicense.getMaintenanceExpiryDate() != null) {
+                maintenanceExpiryDaysGauge.set(DAYS.convert(bambooLicense.getMaintenanceExpiryDate().getTime() - System.currentTimeMillis(), MILLISECONDS));
+            }
+            // because nullable
+            if (bambooLicense.getExpiryDate() != null) {
+                licenseExpiryDaysGauge.set(DAYS.convert(bambooLicense.getExpiryDate().getTime() - System.currentTimeMillis(), MILLISECONDS));
+            }
+            allowedUsersGauge.set(bambooLicense.getMaximumNumberOfUsers());
+        }
+
         List<MetricFamilySamples> result = new ArrayList<>();
         result.addAll(errorsCounter.collect());
         result.addAll(finishedBuildsCounter.collect());
         result.addAll(canceledBuildsCounter.collect());
+        result.addAll(finishedDeploysCounter.collect());
+        result.addAll(maintenanceExpiryDaysGauge.collect());
+        result.addAll(licenseExpiryDaysGauge.collect());
+        result.addAll(allowedUsersGauge.collect());
+
         return result;
     }
 

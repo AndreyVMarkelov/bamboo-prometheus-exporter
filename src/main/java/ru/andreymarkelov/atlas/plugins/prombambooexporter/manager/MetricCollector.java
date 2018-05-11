@@ -7,4 +7,5 @@ public interface MetricCollector {
     void errorsCounter(boolean isNew);
     void finishedBuildsCounter(String planKey, String state);
     void canceledBuildsCounter(String planKey);
+    void finishedDeploysCounter(String planKey, String state);
 }
