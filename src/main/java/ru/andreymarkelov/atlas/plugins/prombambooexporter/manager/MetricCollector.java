@@ -8,4 +8,5 @@ public interface MetricCollector {
     void finishedBuildsCounter(String planKey, String state);
     void canceledBuildsCounter(String planKey);
     void finishedDeploysCounter(String planKey, String state);
+    void buildQueueTimeoutCounter(String planKey);
 }

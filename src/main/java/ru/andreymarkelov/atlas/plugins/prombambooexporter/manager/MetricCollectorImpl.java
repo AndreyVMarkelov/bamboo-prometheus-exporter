@@ -3,6 +3,7 @@ package ru.andreymarkelov.atlas.plugins.prombambooexporter.manager;
 import java.util.ArrayList;
 import java.util.List;
 
+import com.atlassian.bamboo.buildqueue.manager.AgentManager;
 import com.atlassian.bamboo.license.BambooLicenseManager;
 import com.atlassian.extras.api.bamboo.BambooLicense;
 import io.prometheus.client.Collector;
@@ -24,6 +25,7 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
 
     private final CollectorRegistry registry;
     private final BambooLicenseManager bambooLicenseManager;
+    private final AgentManager agentManager;
 
     //--> Common
 
@@ -31,6 +33,23 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .name("bamboo_error_count")
             .help("Errors Count")
             .labelNames("isNew")
+            .create();
+
+    //--> Agents
+
+    private final Gauge allAgentsGauge = Gauge.build()
+            .name("bamboo_all_agents_gauge")
+            .help("All Agents Gauge")
+            .create();
+
+    private final Gauge activeAgentsGauge = Gauge.build()
+            .name("bamboo_active_agents_gauge")
+            .help("Active Agents Gauge")
+            .create();
+
+    private final Gauge busyAgentsGauge = Gauge.build()
+            .name("bamboo_busy_agents_gauge")
+            .help("Busy Agents Gauge")
             .create();
 
     //--> Builds
@@ -44,6 +63,12 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
     private final Counter canceledBuildsCounter = Counter.build()
             .name("bamboo_canceled_build_count")
             .help("Canceled Builds Count")
+            .labelNames("planKey")
+            .create();
+
+    private final Counter buildQueueTimeoutCounter = Counter.build()
+            .name("bamboo_build_queue_timeout_count")
+            .help("Build Queue Timeout Count")
             .labelNames("planKey")
             .create();
 
@@ -71,8 +96,11 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .help("Allowed Users Gauge")
             .create();
 
-    public MetricCollectorImpl(BambooLicenseManager bambooLicenseManager) {
+    public MetricCollectorImpl(
+            BambooLicenseManager bambooLicenseManager,
+            AgentManager agentManager) {
         this.bambooLicenseManager = bambooLicenseManager;
+        this.agentManager = agentManager;
         this.registry = CollectorRegistry.defaultRegistry;
     }
 
@@ -93,6 +121,11 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
     @Override
     public void canceledBuildsCounter(String planKey) {
         canceledBuildsCounter.labels(planKey).inc();
+    }
+
+    @Override
+    public void buildQueueTimeoutCounter(String planKey) {
+        buildQueueTimeoutCounter.labels(planKey).inc();
     }
 
     //--> Deploys
@@ -119,14 +152,23 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             allowedUsersGauge.set(bambooLicense.getMaximumNumberOfUsers());
         }
 
+        // agents
+        allAgentsGauge.set(agentManager.getAllAgents().size());
+        activeAgentsGauge.set(agentManager.getActiveAndEnabledAgents().size());
+        busyAgentsGauge.set(agentManager.getBusyBuildAgents().size());
+
         List<MetricFamilySamples> result = new ArrayList<>();
         result.addAll(errorsCounter.collect());
         result.addAll(finishedBuildsCounter.collect());
         result.addAll(canceledBuildsCounter.collect());
         result.addAll(finishedDeploysCounter.collect());
+        result.addAll(buildQueueTimeoutCounter.collect());
         result.addAll(maintenanceExpiryDaysGauge.collect());
         result.addAll(licenseExpiryDaysGauge.collect());
         result.addAll(allowedUsersGauge.collect());
+        result.addAll(allAgentsGauge.collect());
+        result.addAll(activeAgentsGauge.collect());
+        result.addAll(busyAgentsGauge.collect());
 
         return result;
     }

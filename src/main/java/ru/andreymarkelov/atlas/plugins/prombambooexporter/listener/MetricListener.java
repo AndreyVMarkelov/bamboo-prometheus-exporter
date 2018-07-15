@@ -8,6 +8,7 @@ import com.atlassian.bamboo.deployments.results.service.DeploymentResultService;
 import com.atlassian.bamboo.event.BambooErrorEvent;
 import com.atlassian.bamboo.event.BuildCanceledEvent;
 import com.atlassian.bamboo.event.BuildFinishedEvent;
+import com.atlassian.bamboo.event.BuildQueueTimeoutEvent;
 import com.atlassian.event.api.EventListener;
 import ru.andreymarkelov.atlas.plugins.prombambooexporter.manager.MetricCollector;
 
@@ -38,6 +39,11 @@ public class MetricListener {
     @EventListener
     public void bambooErrorEvent(BambooErrorEvent bambooErrorEvent) {
         metricCollector.errorsCounter(bambooErrorEvent.isNewError());
+    }
+
+    @EventListener
+    public void buildQueueTimeoutEvent(BuildQueueTimeoutEvent buildQueueTimeoutEvent) {
+        metricCollector.buildQueueTimeoutCounter(buildQueueTimeoutEvent.getBuildPlanKey());
     }
 
     @EventListener
