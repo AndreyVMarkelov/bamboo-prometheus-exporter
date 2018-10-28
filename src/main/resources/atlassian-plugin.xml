@@ -33,14 +33,13 @@
     <!-- Actions -->
     <xwork name="Security Token Actions" key="prom-bamboo-exporter-actions">
         <package name="prom-bamboo-exporter-action-admin" extends="admin" namespace="/admin/prommetrics">
-            <action name="settings" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.action.admin.SecureTokenConfigAction" method="doDefault">
+            <action name="settings" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.action.admin.SecureTokenConfigAction" method="input">
                 <result name="input" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
                 <result name="error" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
             </action>
             <action name="savesettings" class="ru.andreymarkelov.atlas.plugins.prombambooexporter.action.admin.SecureTokenConfigAction">
-                <result name="input" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
                 <result name="error" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
-                <result name="success" type="redirect">/admin/prommetrics/settings.action</result>
+                <result name="success" type="freemarker">/ru/andreymarkelov/atlas/plugins/prombambooexporter/templates/admin/settings.ftl</result>
             </action>
         </package>
     </xwork>
