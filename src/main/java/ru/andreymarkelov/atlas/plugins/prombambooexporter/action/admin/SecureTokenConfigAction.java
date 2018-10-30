@@ -46,7 +46,7 @@ public class SecureTokenConfigAction extends GlobalAdminAction implements Prepar
 
     @Override
     public void prepare() {
-        getContext().put("baseurl", "/bamboo");
+        getContext().put("baseurl", getBambooUrl().rootContext());
     }
 
     public boolean isSaved() {
