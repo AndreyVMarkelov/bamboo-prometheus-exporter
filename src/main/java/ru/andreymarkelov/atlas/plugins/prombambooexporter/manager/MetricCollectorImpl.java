@@ -1,10 +1,12 @@
 package ru.andreymarkelov.atlas.plugins.prombambooexporter.manager;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.atlassian.bamboo.buildqueue.manager.AgentManager;
+import com.atlassian.bamboo.event.spi.ExecutorStats;
 import com.atlassian.bamboo.license.BambooLicenseManager;
+import com.atlassian.bamboo.plan.NonBlockingPlanExecutionService;
+import com.atlassian.bamboo.plan.PlanManager;
+import com.atlassian.bamboo.plan.TopLevelPlan;
+import com.atlassian.bamboo.plan.branch.ChainBranch;
 import com.atlassian.extras.api.bamboo.BambooLicense;
 import io.prometheus.client.Collector;
 import io.prometheus.client.CollectorRegistry;
@@ -16,6 +18,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.DisposableBean;
 import org.springframework.beans.factory.InitializingBean;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import static java.util.Collections.emptyList;
 import static java.util.concurrent.TimeUnit.DAYS;
 import static java.util.concurrent.TimeUnit.MILLISECONDS;
@@ -26,6 +31,8 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
     private final CollectorRegistry registry;
     private final BambooLicenseManager bambooLicenseManager;
     private final AgentManager agentManager;
+    private final NonBlockingPlanExecutionService nonBlockingPlanExecutionService;
+    private final PlanManager planManager;
 
     //--> Common
 
@@ -81,6 +88,7 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .create();
 
     //--> License
+
     private final Gauge maintenanceExpiryDaysGauge = Gauge.build()
             .name("bamboo_maintenance_expiry_days_gauge")
             .help("Maintenance Expiry Days Gauge")
@@ -96,13 +104,44 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .help("Allowed Users Gauge")
             .create();
 
+    //--> Plans
+
+    private final Gauge plansGauge = Gauge.build()
+            .name("bamboo_plans_gauge")
+            .help("Plans By Type (top, branch) Gauge")
+            .labelNames("type")
+            .create();
+
+    //--> Workers
+
+    private final Gauge planWorkerIdleGauge = Gauge.build()
+            .name("bamboo_plans_workers_idle_gauge")
+            .help("Plan Workers Idle Gauge")
+            .create();
+
+    private final Gauge planWorkerBusyGauge = Gauge.build()
+            .name("bamboo_plans_workers_busy_gauge")
+            .help("Plan Workers Busy Gauge")
+            .create();
+
+    private final Gauge planWorkerQueueGauge = Gauge.build()
+            .name("bamboo_plans_workers_queue_gauge")
+            .help("Plan Workers Queue Size Gauge")
+            .create();
+
     public MetricCollectorImpl(
             BambooLicenseManager bambooLicenseManager,
-            AgentManager agentManager) {
+            AgentManager agentManager,
+            NonBlockingPlanExecutionService nonBlockingPlanExecutionService,
+            PlanManager planManager) {
         this.bambooLicenseManager = bambooLicenseManager;
         this.agentManager = agentManager;
+        this.nonBlockingPlanExecutionService = nonBlockingPlanExecutionService;
+        this.planManager = planManager;
         this.registry = CollectorRegistry.defaultRegistry;
     }
+
+    // Implementations
 
     //--> Common
 
@@ -157,18 +196,37 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
         activeAgentsGauge.set(agentManager.getActiveAndEnabledAgents().size());
         busyAgentsGauge.set(agentManager.getBusyBuildAgents().size());
 
+        // plans
+        plansGauge.labels("top").set(planManager.getPlanCount(TopLevelPlan.class));
+        plansGauge.labels("branch").set(planManager.getPlanCount(ChainBranch.class));
+
+        // workers
+        final ExecutorStats planExecutorStats = this.nonBlockingPlanExecutionService.getExecutorStats();
+        final int planExecutorStatsActiveCount = planExecutorStats.getActiveCount();
+        planWorkerIdleGauge.set(planExecutorStats.getPoolSize() - planExecutorStatsActiveCount);
+        planWorkerBusyGauge.set(planExecutorStatsActiveCount);
+        planWorkerQueueGauge.set(planExecutorStats.getEventsQueue().size());
+
         List<MetricFamilySamples> result = new ArrayList<>();
         result.addAll(errorsCounter.collect());
         result.addAll(finishedBuildsCounter.collect());
         result.addAll(canceledBuildsCounter.collect());
         result.addAll(finishedDeploysCounter.collect());
         result.addAll(buildQueueTimeoutCounter.collect());
+        // license
         result.addAll(maintenanceExpiryDaysGauge.collect());
         result.addAll(licenseExpiryDaysGauge.collect());
         result.addAll(allowedUsersGauge.collect());
+        // agents
         result.addAll(allAgentsGauge.collect());
         result.addAll(activeAgentsGauge.collect());
         result.addAll(busyAgentsGauge.collect());
+        // plans
+        result.addAll(plansGauge.collect());
+        // workers
+        result.addAll(planWorkerIdleGauge.collect());
+        result.addAll(planWorkerBusyGauge.collect());
+        result.addAll(planWorkerQueueGauge.collect());
 
         return result;
     }
