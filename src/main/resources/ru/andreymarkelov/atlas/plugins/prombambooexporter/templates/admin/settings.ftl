@@ -33,7 +33,6 @@
                 </div>
                 [/#if]
                 <div id="base-form">
-                ${baseurl}
                     [@ww.form
                         action="savesettings"
                         id="saveSettingsForm"
