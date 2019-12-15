@@ -64,7 +64,7 @@
         <plugins>
             <plugin>
                 <groupId>com.atlassian.maven.plugins</groupId>
-                <artifactId>maven-bamboo-plugin</artifactId>
+                <artifactId>bamboo-maven-plugin</artifactId>
                 <version>${amps.version}</version>
                 <extensions>true</extensions>
                 <configuration>
@@ -87,7 +87,7 @@
     <properties>
         <bamboo.version>5.8.0</bamboo.version>
         <bamboo.data.version>${bamboo.version}</bamboo.data.version>
-        <amps.version>6.3.21</amps.version>
+        <amps.version>8.0.4</amps.version>
         <prometheus.version>0.8.0</prometheus.version>
         <useFastdevCli>false</useFastdevCli>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
