@@ -84,7 +84,7 @@
     </build>
 
     <properties>
-        <bamboo.version>6.10.4</bamboo.version>
+        <bamboo.version>5.8.0</bamboo.version>
         <bamboo.data.version>${bamboo.version}</bamboo.data.version>
         <amps.version>6.3.21</amps.version>
         <prometheus.version>0.8.0</prometheus.version>

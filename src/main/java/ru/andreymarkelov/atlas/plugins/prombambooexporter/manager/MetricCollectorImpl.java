@@ -1,5 +1,6 @@
 package ru.andreymarkelov.atlas.plugins.prombambooexporter.manager;
 
+import com.atlassian.bamboo.ServerLifecycleProvider;
 import com.atlassian.bamboo.buildqueue.manager.AgentManager;
 import com.atlassian.bamboo.event.spi.ExecutorStats;
 import com.atlassian.bamboo.license.BambooLicenseManager;
@@ -33,6 +34,7 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
     private final AgentManager agentManager;
     private final NonBlockingPlanExecutionService nonBlockingPlanExecutionService;
     private final PlanManager planManager;
+    private final ServerLifecycleProvider serverLifecycleProvider;
 
     //--> Common
 
@@ -40,6 +42,11 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .name("bamboo_error_count")
             .help("Errors Count")
             .labelNames("isNew")
+            .create();
+
+    private final Gauge lifecycleStateGauge = Gauge.build()
+            .name("bamboo_lifecycle_state_gauge")
+            .help("Lifecycle State")
             .create();
 
     //--> Agents
@@ -133,11 +140,13 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             BambooLicenseManager bambooLicenseManager,
             AgentManager agentManager,
             NonBlockingPlanExecutionService nonBlockingPlanExecutionService,
-            PlanManager planManager) {
+            PlanManager planManager,
+            ServerLifecycleProvider serverLifecycleProvider) {
         this.bambooLicenseManager = bambooLicenseManager;
         this.agentManager = agentManager;
         this.nonBlockingPlanExecutionService = nonBlockingPlanExecutionService;
         this.planManager = planManager;
+        this.serverLifecycleProvider = serverLifecycleProvider;
         this.registry = CollectorRegistry.defaultRegistry;
     }
 
@@ -177,6 +186,9 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
     //--> Collect
 
     private List<MetricFamilySamples> collectInternal() {
+        // server states
+        lifecycleStateGauge.set(serverLifecycleProvider.getServerLifecycleState().ordinal());
+
         // license
         BambooLicense bambooLicense = bambooLicenseManager.getLicense();
         if (bambooLicense != null) {
@@ -208,6 +220,7 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
         planWorkerQueueGauge.set(planExecutorStats.getEventsQueue().size());
 
         List<MetricFamilySamples> result = new ArrayList<>();
+        result.addAll(lifecycleStateGauge.collect());
         result.addAll(errorsCounter.collect());
         result.addAll(finishedBuildsCounter.collect());
         result.addAll(canceledBuildsCounter.collect());
