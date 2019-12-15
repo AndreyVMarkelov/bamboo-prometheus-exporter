@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.6] (v5.8.x-6.10.x)
+
+- Added new metric: bamboo_lifecycle_state_gauge
+
 ## [1.0.5] (v5.8.x-6.9.x)
 
 - Added new metric: bamboo_plans_gauge (plans count)
