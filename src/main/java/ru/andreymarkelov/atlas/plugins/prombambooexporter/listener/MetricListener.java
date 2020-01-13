@@ -28,7 +28,12 @@ public class MetricListener {
 
     @EventListener
     public void buildFinishedEvent(BuildFinishedEvent buildFinishedEvent) {
+        long duration = 0;
+        if (buildFinishedEvent.getBuildContext() != null) {
+            duration = buildFinishedEvent.getTimestamp() - buildFinishedEvent.getBuildContext().getCurrentResult().getTasksStartDate().getTime();
+        }
         metricCollector.finishedBuildsCounter(buildFinishedEvent.getBuildPlanKey(), buildFinishedEvent.getBuildState().name());
+        metricCollector.finishedBuildsDuration(buildFinishedEvent.getBuildPlanKey(), duration);
     }
 
     @EventListener

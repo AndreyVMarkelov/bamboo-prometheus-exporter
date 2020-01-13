@@ -9,10 +9,7 @@ import com.atlassian.bamboo.plan.PlanManager;
 import com.atlassian.bamboo.plan.TopLevelPlan;
 import com.atlassian.bamboo.plan.branch.ChainBranch;
 import com.atlassian.extras.api.bamboo.BambooLicense;
-import io.prometheus.client.Collector;
-import io.prometheus.client.CollectorRegistry;
-import io.prometheus.client.Counter;
-import io.prometheus.client.Gauge;
+import io.prometheus.client.*;
 import io.prometheus.client.hotspot.DefaultExports;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -72,6 +69,12 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
             .name("bamboo_finished_build_count")
             .help("Finished Builds Count")
             .labelNames("planKey", "state")
+            .create();
+
+    private final Histogram finishedBuildsDuration = Histogram.build()
+            .name("bamboo_build_duration_histogram")
+            .help("Finished Builds Duration in ms")
+            .labelNames("planKey")
             .create();
 
     private final Counter canceledBuildsCounter = Counter.build()
@@ -167,6 +170,11 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
     }
 
     @Override
+    public void finishedBuildsDuration(String planKey, long duration) {
+        finishedBuildsDuration.labels(planKey).observe(duration);
+    }
+
+    @Override
     public void canceledBuildsCounter(String planKey) {
         canceledBuildsCounter.labels(planKey).inc();
     }
@@ -223,6 +231,7 @@ public class MetricCollectorImpl extends Collector implements MetricCollector, I
         result.addAll(lifecycleStateGauge.collect());
         result.addAll(errorsCounter.collect());
         result.addAll(finishedBuildsCounter.collect());
+        result.addAll(finishedBuildsDuration.collect());
         result.addAll(canceledBuildsCounter.collect());
         result.addAll(finishedDeploysCounter.collect());
         result.addAll(buildQueueTimeoutCounter.collect());

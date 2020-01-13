@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](http://semver.org/spec/v2.0.0.
 
 ## [Unreleased]
 
+## [1.0.7] (v5.8.x-6.10.x)
+
+- Added new metric: bamboo_build_duration_histogram [#5](https://github.com/AndreyVMarkelov/bamboo-prometheus-exporter/issues/5)
+
 ## [1.0.6] (v5.8.x-6.10.x)
 
 - Added new metric: bamboo_lifecycle_state_gauge
