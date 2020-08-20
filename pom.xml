@@ -5,7 +5,7 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.andreymarkelov.atlas.plugins</groupId>
     <artifactId>prom-bamboo-exporter</artifactId>
-    <version>1.0.8</version>
+    <version>1.0.9</version>
     <packaging>atlassian-plugin</packaging>
 
     <name>Prometheus Exporter For Bamboo</name>
@@ -85,7 +85,10 @@
     </build>
 
     <properties>
-        <bamboo.version>7.0.2</bamboo.version>
+        <!--
+        <bamboo.version>5.8.0</bamboo.version>
+        -->
+        <bamboo.version>5.8.0</bamboo.version>
         <bamboo.data.version>${bamboo.version}</bamboo.data.version>
         <amps.version>8.0.4</amps.version>
         <prometheus.version>0.8.0</prometheus.version>
