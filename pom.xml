@@ -5,15 +5,15 @@
     <modelVersion>4.0.0</modelVersion>
     <groupId>ru.andreymarkelov.atlas.plugins</groupId>
     <artifactId>prom-bamboo-exporter</artifactId>
-    <version>1.0.7</version>
+    <version>1.0.10</version>
     <packaging>atlassian-plugin</packaging>
 
     <name>Prometheus Exporter For Bamboo</name>
     <description>This plugin for Atlassian Bamboo provides endpoint to export metrics to prometheus.</description>
 
     <organization>
-        <name>Andrey Markelov</name>
-        <url>http://ru.linkedin.com/in/andreymarkelov/</url>
+        <name>Cprime</name>
+        <url>http://cprime.com/</url>
     </organization>
 
     <dependencies>
@@ -85,6 +85,9 @@
     </build>
 
     <properties>
+        <!--
+        <bamboo.version>5.8.0</bamboo.version>
+        -->
         <bamboo.version>5.8.0</bamboo.version>
         <bamboo.data.version>${bamboo.version}</bamboo.data.version>
         <amps.version>8.0.4</amps.version>
